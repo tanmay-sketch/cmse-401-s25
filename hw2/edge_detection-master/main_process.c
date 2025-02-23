@@ -21,20 +21,20 @@ void abort_(const char * s, ...)
 char ** process_img(char ** img, char ** output, image_size_t sz, int halfwindow, double thresh)
 {
 	//Average Filter 
-  // changed the order for average filter
-  for(int r=0;r<sz.height;r++)
-    for(int c=0;c<sz.width;c++) 
-		{
-			double count = 0;
-			double tot = 0;
-			for(int cw=max(0,c-halfwindow); cw<min(sz.width,c+halfwindow+1); cw++)
-				for(int rw=max(0,r-halfwindow); rw<min(sz.height,r+halfwindow+1); rw++)
-				{
-					count++;
-					tot += (double) img[rw][cw];
-				}
-			output[r][c] = (int) (tot/count);
-		}
+  	// changed the order for average filter
+	for(int r=0;r<sz.height;r++)
+		for(int c=0;c<sz.width;c++) 
+			{
+				double count = 0;
+				double tot = 0;
+				for(int cw=max(0,c-halfwindow); cw<min(sz.width,c+halfwindow+1); cw++)
+					for(int rw=max(0,r-halfwindow); rw<min(sz.height,r+halfwindow+1); rw++)
+					{
+						count++;
+						tot += (double) img[rw][cw];
+					}
+				output[r][c] = (int) (tot/count);
+			}
 
 	//write debug image
 	//write_png_file("after_smooth.png",output[0],sz);
@@ -61,12 +61,12 @@ char ** process_img(char ** img, char ** output, image_size_t sz, int halfwindow
         	g_img[r] = &gradient[r*sz.width];
 
 	// Gradient filter
-  // changed the order for the gradient filter
+  	// changed the order for the gradient filter
         for(int r=1;r<sz.height-1;r++)
           for(int c=1;c<sz.width-1;c++)
                 {
                         double Gx = 0;
-			double Gy = 0;
+						double Gy = 0;
                         for(int cw=0; cw<3; cw++)
                         	for(int rw=0; rw<3; rw++)
                                 {
@@ -78,7 +78,7 @@ char ** process_img(char ** img, char ** output, image_size_t sz, int halfwindow
 	
 
 	// thresholding
-  // changed the order of loops for thresholding
+  	// changed the order of loops for thresholding
         for(int r=0;r<sz.height;r++)
           for(int c=0;c<sz.width;c++)
 			if (g_img[r][c] > thresh)
