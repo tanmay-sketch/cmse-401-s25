@@ -21,9 +21,10 @@ void abort_(const char * s, ...)
 
 char ** process_img(char ** img, char ** output, image_size_t sz, int halfwindow, double thresh)
 {
+  printf("Image size: %d x %d\n",sz.width,sz.height);
 	//Average Filter 
   // changed the order for average filter
-  #pragma omp parallel for collapse(2)
+  #pragma omp parallel for collapse(2) schedule(static,)
   for(int r=0;r<sz.height;r++)
     for(int c=0;c<sz.width;c++) 
       {
