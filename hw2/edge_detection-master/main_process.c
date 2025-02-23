@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include "png_util.h"
+#include "omp.h"
 #define min(X,Y) ((X) < (Y) ? (X) : (Y))
 #define max(X,Y) ((X) > (Y) ? (X) : (Y))
 
@@ -21,35 +22,37 @@ void abort_(const char * s, ...)
 char ** process_img(char ** img, char ** output, image_size_t sz, int halfwindow, double thresh)
 {
 	//Average Filter 
-  	// changed the order for average filter
-	for(int r=0;r<sz.height;r++)
-		for(int c=0;c<sz.width;c++) 
-			{
-				double count = 0;
-				double tot = 0;
-				for(int cw=max(0,c-halfwindow); cw<min(sz.width,c+halfwindow+1); cw++)
-					for(int rw=max(0,r-halfwindow); rw<min(sz.height,r+halfwindow+1); rw++)
-					{
-						count++;
-						tot += (double) img[rw][cw];
-					}
-				output[r][c] = (int) (tot/count);
-			}
+  // changed the order for average filter
+    
+  #pragma omp parallel for collapse(2)
+  for(int r=0;r<sz.height;r++)
+    for(int c=0;c<sz.width;c++) 
+      {
+        double count = 0;
+        double tot = 0;
+        for(int cw=max(0,c-halfwindow); cw<min(sz.width,c+halfwindow+1); cw++)
+          for(int rw=max(0,r-halfwindow); rw<min(sz.height,r+halfwindow+1); rw++)
+          {
+            count++;
+            tot += (double) img[rw][cw];
+          }
+        output[r][c] = (int) (tot/count);
+      }
 
 	//write debug image
 	//write_png_file("after_smooth.png",output[0],sz);
 
-	//Sobel Filters
-	double xfilter[3][3];
-	double yfilter[3][3];
-	xfilter[0][0] = -1;
-	xfilter[1][0] = -2;
-	xfilter[2][0] = -1;
-	xfilter[0][1] = 0;
-	xfilter[1][1] = 0;
-	xfilter[2][1] = 0;
-	xfilter[0][2] = 1;
-	xfilter[1][2] = 2;
+  //Sobel Filters
+  double xfilter[3][3];
+  double yfilter[3][3];
+  xfilter[0][0] = -1;
+  xfilter[1][0] = -2;
+  xfilter[2][0] = -1;
+  xfilter[0][1] = 0;
+  xfilter[1][1] = 0;
+  xfilter[2][1] = 0;
+  xfilter[0][2] = 1;
+  xfilter[1][2] = 2;
 	xfilter[2][2] = 1;
 	for(int i=0;i<3;i++) 
 		for(int j=0;j<3;j++)
@@ -61,30 +64,34 @@ char ** process_img(char ** img, char ** output, image_size_t sz, int halfwindow
         	g_img[r] = &gradient[r*sz.width];
 
 	// Gradient filter
-  	// changed the order for the gradient filter
-        for(int r=1;r<sz.height-1;r++)
-          for(int c=1;c<sz.width-1;c++)
-                {
-                        double Gx = 0;
-						double Gy = 0;
-                        for(int cw=0; cw<3; cw++)
-                        	for(int rw=0; rw<3; rw++)
-                                {
-                                        Gx +=  ((double) output[r+rw-1][c+cw-1])*xfilter[rw][cw];
-                                        Gy +=  ((double) output[r+rw-1][c+cw-1])*yfilter[rw][cw];
-                                }
-                        g_img[r][c] = sqrt(Gx*Gx+Gy*Gy);
-                }
+  // changed the order for the gradient filter
+  #pragma parallel for collapse(2)
+  for(int r=1;r<sz.height-1;r++)
+    for(int c=1;c<sz.width-1;c++)
+          {
+              double Gx = 0;
+              double Gy = 0;
+              for(int cw=0; cw<3; cw++)
+                for(int rw=0; rw<3; rw++)
+                      {
+                              Gx +=  ((double) output[r+rw-1][c+cw-1])*xfilter[rw][cw];
+                              Gy +=  ((double) output[r+rw-1][c+cw-1])*yfilter[rw][cw];
+                      }
+              g_img[r][c] = sqrt(Gx*Gx+Gy*Gy);
+          }
 	
 
 	// thresholding
-  	// changed the order of loops for thresholding
-        for(int r=0;r<sz.height;r++)
-          for(int c=0;c<sz.width;c++)
+  // changed the order of loops for thresholding
+  #pragma parallel for collapse(2)
+  for(int r=0;r<sz.height;r++)
+    for(int c=0;c<sz.width;c++)
+    {
 			if (g_img[r][c] > thresh)
 				output[r][c] = 255;
 			else
 				output[r][c] = 0;
+    }
 }
 
 
