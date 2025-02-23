@@ -65,7 +65,7 @@ char ** process_img(char ** img, char ** output, image_size_t sz, int halfwindow
 
 	// Gradient filter
   // changed the order for the gradient filter
-  #pragma parallel for collapse(2)
+  #pragma omp parallel for collapse(2)
   for(int r=1;r<sz.height-1;r++)
     for(int c=1;c<sz.width-1;c++)
           {
@@ -83,7 +83,7 @@ char ** process_img(char ** img, char ** output, image_size_t sz, int halfwindow
 
 	// thresholding
   // changed the order of loops for thresholding
-  #pragma parallel for collapse(2)
+  #pragma omp parallel for collapse(2)
   for(int r=0;r<sz.height;r++)
     for(int c=0;c<sz.width;c++)
     {
