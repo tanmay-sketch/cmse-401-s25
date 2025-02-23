@@ -21,8 +21,9 @@ void abort_(const char * s, ...)
 char ** process_img(char ** img, char ** output, image_size_t sz, int halfwindow, double thresh)
 {
 	//Average Filter 
-	for(int c=0;c<sz.width;c++) 
-		for(int r=0;r<sz.height;r++)
+  // changed the order for average filter
+  for(int r=0;r<sz.height;r++)
+    for(int c=0;c<sz.width;c++) 
 		{
 			double count = 0;
 			double tot = 0;
@@ -60,8 +61,9 @@ char ** process_img(char ** img, char ** output, image_size_t sz, int halfwindow
         	g_img[r] = &gradient[r*sz.width];
 
 	// Gradient filter
-        for(int c=1;c<sz.width-1;c++)
-        	for(int r=1;r<sz.height-1;r++)
+  // changed the order for the gradient filter
+        for(int r=1;r<sz.height-1;r++)
+          for(int c=1;c<sz.width-1;c++)
                 {
                         double Gx = 0;
 			double Gy = 0;
@@ -76,8 +78,9 @@ char ** process_img(char ** img, char ** output, image_size_t sz, int halfwindow
 	
 
 	// thresholding
-        for(int c=0;c<sz.width;c++)
-        	for(int r=0;r<sz.height;r++)
+  // changed the order of loops for thresholding
+        for(int r=0;r<sz.height;r++)
+          for(int c=0;c<sz.width;c++)
 			if (g_img[r][c] > thresh)
 				output[r][c] = 255;
 			else

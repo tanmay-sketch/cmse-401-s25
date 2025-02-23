@@ -1,4 +1,4 @@
-CFLAGS = -Os
+CFLAGS = -O3
 all: process 
 
 main_process.o: main_process.c
