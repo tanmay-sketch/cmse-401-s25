@@ -97,14 +97,15 @@ char ** process_img(char ** img, char ** output, image_size_t sz, int halfwindow
 
 int main(int argc, char **argv)
 {
-  #pragma omp parallel
-  {
-    #pragma omp single 
-    {
-      int nthreads = omp_get_num_threads();
-      printf("Number of threads=%d\n",nthreads);
-    }
-  }   
+  // #pragma omp parallel
+  // {
+    // #pragma omp single 
+    // {
+      // int nthreads = omp_get_num_threads();
+      // printf("Number of threads=%d\n",nthreads);
+    // }
+  // }   
+
 	//Code currently does not support more than one channel (i.e. grayscale only)
 	int channels=1; 
 	double thresh = 50;
