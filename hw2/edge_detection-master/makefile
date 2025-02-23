@@ -14,4 +14,6 @@ test: process
 
 clean:
 	rm *.o
-	rm process 
+	rm process
+
+ 
