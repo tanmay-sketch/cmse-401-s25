@@ -99,7 +99,8 @@ int main(int argc, char **argv)
 {
   #pragma omp parallel
   {
-    #pragma omp single {
+    #pragma omp single 
+    {
       int nthreads = omp_get_num_threads();
       printf("Number of threads=%d\n",nthreads);
     }
