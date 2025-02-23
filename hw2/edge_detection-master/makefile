@@ -1,4 +1,4 @@
-CFLAGS = -fopenmp
+CFLAGS = -O3 -fopenmp
 all: process 
 
 main_process.o: main_process.c
