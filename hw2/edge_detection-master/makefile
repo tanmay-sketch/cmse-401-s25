@@ -1,20 +1,25 @@
-CFLAGS = -O3 -fopenmp
-all: process 
+CFLAGS_ORIGINAL = -O0
+CFLAGS_BEST = -O3
+CFLAGS_PARALLEL = -O3 -fopenmp
+LIBS = -lm -lpng16
 
-main_process.o: main_process.c
-	gcc $(CFLAGS) -c main_process.c 
+all: original best_serial process
 
-png_util.o: png_util.c
-	gcc $(CFLAGS) -l lpng16 -c png_util.c
+original: original.c png_util.c
+	gcc $(CFLAGS_ORIGINAL) -o original original.c png_util.c $(LIBS)
 
-process: main_process.o png_util.o
-	gcc $(CFLAGS) -o process -lm -l png16 main_process.o png_util.o
+best_serial: best_serial_main.c png_util.c
+	gcc $(CFLAGS_BEST) -o best_serial best_serial_main.c png_util.c $(LIBS)
 
-test: process 
+process: main_process.c png_util.c
+	gcc $(CFLAGS_PARALLEL) -o process main_process.c png_util.c $(LIBS)
+
+test: process
 	./process ./images/cube.png cube_edges.png
+	./process ./images/earth.png earth_edges.png
+	./process ./images/minion_bw.png minion_edges.png
+	./process ./images/MSUStadium.png stadium_edges.png
+	./process ./images/sparty.png sparty_edges.png
 
 clean:
-	rm *.o
-	rm process
-
- 
+	rm -f original best_serial process *.o
