@@ -21,10 +21,9 @@ void abort_(const char * s, ...)
 
 char ** process_img(char ** img, char ** output, image_size_t sz, int halfwindow, double thresh)
 {
-  printf("Image size: %d x %d\n",sz.width,sz.height);
-	//Average Filter 
+  //Average Filter 
   // changed the order for average filter
-  #pragma omp parallel for collapse(2)
+  #pragma omp parallel for collapse(2) schedule(auto)
   for(int r=0;r<sz.height;r++)
     for(int c=0;c<sz.width;c++) 
       {
@@ -39,8 +38,8 @@ char ** process_img(char ** img, char ** output, image_size_t sz, int halfwindow
         output[r][c] = (int) (tot/count);
       }
 
-	//write debug image
-	//write_png_file("after_smooth.png",output[0],sz);
+  //write debug image
+  //write_png_file("after_smooth.png",output[0],sz);
 
   //Sobel Filters
   double xfilter[3][3];
@@ -53,19 +52,19 @@ char ** process_img(char ** img, char ** output, image_size_t sz, int halfwindow
   xfilter[2][1] = 0;
   xfilter[0][2] = 1;
   xfilter[1][2] = 2;
-	xfilter[2][2] = 1;
-	for(int i=0;i<3;i++) 
-		for(int j=0;j<3;j++)
-			yfilter[j][i] = xfilter[i][j];
+  xfilter[2][2] = 1;
+  for(int i=0;i<3;i++) 
+    for(int j=0;j<3;j++)
+      yfilter[j][i] = xfilter[i][j];
 
-	double * gradient = (double *) malloc(sz.width*sz.height*sizeof(double));
+  double * gradient = (double *) malloc(sz.width*sz.height*sizeof(double));
         double ** g_img = malloc(sz.height * sizeof(double*));
         for (int r=0; r<sz.height; r++)
-        	g_img[r] = &gradient[r*sz.width];
+          g_img[r] = &gradient[r*sz.width];
 
-	// Gradient filter
+  // Gradient filter
   // changed the order for the gradient filter
-  #pragma omp parallel for collapse(2)
+  #pragma omp parallel for collapse(2) schedule(auto)
   for(int r=1;r<sz.height-1;r++)
     for(int c=1;c<sz.width-1;c++)
           {
@@ -79,22 +78,20 @@ char ** process_img(char ** img, char ** output, image_size_t sz, int halfwindow
                       }
               g_img[r][c] = sqrt(Gx*Gx+Gy*Gy);
           }
-	
+  
 
-	// thresholding
+  // thresholding
   // changed the order of loops for thresholding
-  #pragma omp parallel for collapse(2)
+  #pragma omp parallel for collapse(2) schedule(auto)
   for(int r=0;r<sz.height;r++)
     for(int c=0;c<sz.width;c++)
     {
-			if (g_img[r][c] > thresh)
-				output[r][c] = 255;
-			else
-				output[r][c] = 0;
+      if (g_img[r][c] > thresh)
+        output[r][c] = 255;
+      else
+        output[r][c] = 0;
     }
 }
-
-
 
 int main(int argc, char **argv)
 {
@@ -107,44 +104,44 @@ int main(int argc, char **argv)
     // }
   // }   
 
-	//Code currently does not support more than one channel (i.e. grayscale only)
-	int channels=1; 
-	double thresh = 50;
-	int halfwindow = 3;
+  //Code currently does not support more than one channel (i.e. grayscale only)
+  int channels=1; 
+  double thresh = 50;
+  int halfwindow = 3;
 
-	//Ensure at least two input arguments
+  //Ensure at least two input arguments
         if (argc < 3 )
                 abort_("Usage: process <file_in> <file_out> <halfwindow=3> <threshold=50>");
 
-	//Set optional window argument
-	if (argc > 3 )
-		halfwindow = atoi(argv[3]);
+  //Set optional window argument
+  if (argc > 3 )
+    halfwindow = atoi(argv[3]);
 
-	//Set optional threshold argument
-	if (argc > 4 )
-		thresh = (double) atoi(argv[4]);
+  //Set optional threshold argument
+  if (argc > 4 )
+    thresh = (double) atoi(argv[4]);
 
-	//Allocate memory for images
-	image_size_t sz = get_image_size(argv[1]);
-	char * s_img = (char *) malloc(sz.width*sz.height*channels*sizeof(char));
-	char * o_img = (char *) malloc(sz.width*sz.height*channels*sizeof(char));
+  //Allocate memory for images
+  image_size_t sz = get_image_size(argv[1]);
+  char * s_img = (char *) malloc(sz.width*sz.height*channels*sizeof(char));
+  char * o_img = (char *) malloc(sz.width*sz.height*channels*sizeof(char));
 
-	//Read in serial 1D memory
+  //Read in serial 1D memory
         read_png_file(argv[1],s_img,sz);
 
- 	//make 2D pointer arrays from 1D image arrays
-	char **img = malloc(sz.height * sizeof(char*));
-  	for (int r=0; r<sz.height; r++)
-		img[r] = &s_img[r*sz.width];
-    	char **output = malloc(sz.height * sizeof(char*));
+  //make 2D pointer arrays from 1D image arrays
+  char **img = malloc(sz.height * sizeof(char*));
+    for (int r=0; r<sz.height; r++)
+    img[r] = &s_img[r*sz.width];
+      char **output = malloc(sz.height * sizeof(char*));
         for (int r=0; r<sz.height; r++)
                 output[r] = &o_img[r*sz.width];
 
-	//Run the main image processing function
-	process_img(img,output,sz,halfwindow,thresh);
+  //Run the main image processing function
+  process_img(img,output,sz,halfwindow,thresh);
 
         //Write out output image using 1D serial pointer
-	write_png_file(argv[2],o_img,sz);
+  write_png_file(argv[2],o_img,sz);
 
         return 0;
 }

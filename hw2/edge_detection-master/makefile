@@ -11,7 +11,7 @@ process: main_process.o png_util.o
 	gcc $(CFLAGS) -o process -lm -l png16 main_process.o png_util.o
 
 test: process 
-	./process ./images/cube.png test.png
+	./process ./images/MSUStadium.png stadium_edges.png
 
 clean:
 	rm *.o
