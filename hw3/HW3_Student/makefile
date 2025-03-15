@@ -1,6 +1,6 @@
 all: gol 
 
-CC:=gcc
+CC:=nvcc
 EXT:=c
 FLAGS:=-lm -lpng16
 
