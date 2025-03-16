@@ -1,11 +1,17 @@
-all: gol 
+all: gol
 
-CC:=nvcc
-EXT:=c
-FLAGS:=-lm -lpng16
+CC ?= gcc
+
+ifeq ($(CC),nvcc)
+	EXT := cu
+	FLAGS := -std=c++11 -lm -lpng16
+else
+	EXT := c
+	FLAGS := -lm -lpng16
+endif
 
 gameoflife.o: gameoflife.$(EXT)
-	$(CC) $(FLAGS) -c gameoflife.$(EXT) 
+	$(CC) $(FLAGS) -c gameoflife.$(EXT)
 
 png_util.o: png_util.$(EXT)
 	$(CC) $(FLAGS) -c png_util.$(EXT)
@@ -20,6 +26,4 @@ test2: gol data.txt
 	cuda-memcheck ./gol < data.txt
 
 clean:
-	rm *.o
-	rm gol 
-
+	rm -f *.o gol
