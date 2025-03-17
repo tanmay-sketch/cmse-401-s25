@@ -139,7 +139,7 @@ int main() {
         }
         // Copy the final state (board0) from GPU to CPU.
         CUDA_CALL(cudaMemcpy(plate[0], d_plate, plate_size, cudaMemcpyDeviceToHost));
-        plate2png("plate.png");
+        plate2png("plate_parallel.png");
         print_plate();
         CUDA_CALL(cudaFree(d_plate));
     }
