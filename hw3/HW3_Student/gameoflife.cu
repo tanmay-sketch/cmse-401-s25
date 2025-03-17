@@ -47,7 +47,7 @@ void print_plate(){
 }
 
 void plate2png(char* filename) {
-    char * img = (char *) malloc(n*n*sizeof(char));
+    unsigned char* img = (unsigned char*) malloc(n * n * sizeof(unsigned char));
 
     image_size_t sz;
     sz.width = n;

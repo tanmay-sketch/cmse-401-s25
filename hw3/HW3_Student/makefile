@@ -1,4 +1,4 @@
-ll: gol
+all: gol
 
 CC := nvcc
 
