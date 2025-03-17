@@ -12,12 +12,16 @@
     if (cuda_error__) std::cout << "CUDA error: " << #x << " returned " \
     << cudaGetErrorString(cuda_error__) << std::endl; }
 
+// CPU simulation boards (for input/output).
+// We only use plate[0] for I/O, since the final state is stored there.
 char plate[2][(MAX_N + 2) * (MAX_N + 2)];
 int n;
 
-// CUDA kernel to perform one iteration of Game of Life on the GPU.
-// This kernel always reads from board0 (at d_plate offset 0) and writes to board1 (at d_plate + plate_size).
+// CUDA kernel to perform one iteration of the Game of Life.
+// This kernel always reads from board0 (at d_plate offset 0)
+// and writes to board1 (at d_plate + plate_size).
 __global__ void iteration_kernel(char* d_plate, int n) {
+    // Compute row and column indices (accounting for the padded border)
     int i = blockIdx.y * blockDim.y + threadIdx.y + 1;
     int j = blockIdx.x * blockDim.x + threadIdx.x + 1;
     
@@ -25,13 +29,16 @@ __global__ void iteration_kernel(char* d_plate, int n) {
         int stride = n + 2;
         int index = i * stride + j;
         int plate_size = (n + 2) * (n + 2);
+        // Pointers to current and next state
         char* curr = d_plate;                // board0: current state
         char* next = d_plate + plate_size;     // board1: next state
         
+        // Count live neighbors
         int num = curr[index - stride - 1] + curr[index - stride] + curr[index - stride + 1] +
                   curr[index - 1]           +                      curr[index + 1] +
                   curr[index + stride - 1]  + curr[index + stride]  + curr[index + stride + 1];
-        
+                  
+        // Apply Game of Life rules
         if (curr[index])
             next[index] = (num == 2 || num == 3) ? 1 : 0;
         else
@@ -39,7 +46,7 @@ __global__ void iteration_kernel(char* d_plate, int n) {
     }
 }
 
-// Print the CPU plate (only if n is small enough to display)
+// Print the CPU board (only if n is small enough to display)
 void print_plate(){
     if (n < 60) {
         for (int i = 1; i <= n; i++){
@@ -51,9 +58,11 @@ void print_plate(){
     } else {
         printf("Plate too large to print to screen\n");
     }
+    printf("\0");
 }
 
-// Convert the CPU plate to a PNG image file.
+// Convert the CPU board to a PNG image file.
+// The final simulation state is stored in plate[0].
 void plate2png(const char* filename) {
     unsigned char* img = (unsigned char*) malloc(n * n * sizeof(unsigned char));
     if (img == NULL) {
@@ -68,10 +77,7 @@ void plate2png(const char* filename) {
         for (int j = 1; j <= n; j++){
             int pindex = i * (n + 2) + j;
             int index = (i - 1) * n + (j - 1);
-            if (plate[0][pindex] > 0)
-                img[index] = 255; 
-            else 
-                img[index] = 0;
+            img[index] = (plate[0][pindex] > 0) ? 255 : 0;
         }
     }
     printf("Writing file\n");
@@ -85,13 +91,13 @@ int main() {
     int M;
     char line[MAX_N];
     
-    // ------- GPU initialization -------
-    // Set device to GPU 1 which has plenty of available memory.
+    // Set GPU device to GPU 1 (which has plenty of free memory)
     CUDA_CALL(cudaSetDevice(1));
     
+    // Read grid size and number of iterations.
     if (scanf("%d %d", &n, &M) == 2) {
         if (n > 0) {
-            // Initialize CPU board (board0 holds the initial state; board1 is unused).
+            // Initialize CPU board (board0 holds the input state; board1 is unused)
             memset(plate[0], 0, sizeof(char) * (n + 2) * (n + 2));
             memset(plate[1], 0, sizeof(char) * (n + 2) * (n + 2));
             for (int i = 1; i <= n; i++){
@@ -101,34 +107,37 @@ int main() {
                 }
             }
         } else {
+            // If n <= 0, use MAX_N and initialize randomly.
             n = MAX_N; 
             for (int i = 1; i <= n; i++)
                 for (int j = 0; j < n; j++)
                     plate[0][i * (n + 2) + j + 1] = (char)(rand() % 2);
         }
         
-        // Calculate GPU memory size for one board and allocate space for two boards.
+        // Calculate memory size for one board and allocate a contiguous block for two boards.
         int plate_size = (n + 2) * (n + 2) * sizeof(char);
         int total_size = 2 * plate_size;
         char* d_plate;
         
-        // -------- Allocating and copying to GPU ---------
+        // Allocate GPU memory.
         CUDA_CALL(cudaMalloc((void**)&d_plate, total_size));
+        // Copy initial state (board0) from CPU to GPU.
         CUDA_CALL(cudaMemcpy(d_plate, plate[0], plate_size, cudaMemcpyHostToDevice));
         
-        // Define block and grid dimensions.
-        dim3 block(16, 16); // Block of 16x16 threads
-        dim3 grid((n + block.x - 1) / block.x, (n + block.y - 1) / block.y); // Number of blocks needed
+        // Set up CUDA kernel launch dimensions.
+        dim3 block(16, 16);
+        dim3 grid((n + block.x - 1) / block.x, (n + block.y - 1) / block.y);
         
-        // Main simulation loop: for each iteration, compute next state and copy it back to board0.
+        // Main simulation loop:
+        // For each iteration, run the kernel to compute the next state (board1),
+        // then copy board1 back to board0 so that the state is updated.
         for (int i = 0; i < M; i++) {
             iteration_kernel<<<grid, block>>>(d_plate, n);
             CUDA_CALL(cudaGetLastError());
             CUDA_CALL(cudaDeviceSynchronize());
-            // Copy board1 (next state) to board0 (current state)
             CUDA_CALL(cudaMemcpy(d_plate, d_plate + plate_size, plate_size, cudaMemcpyDeviceToDevice));
         }
-        // Copy final state from GPU (board0) to CPU.
+        // Copy the final state (board0) from GPU to CPU.
         CUDA_CALL(cudaMemcpy(plate[0], d_plate, plate_size, cudaMemcpyDeviceToHost));
         plate2png("plate.png");
         print_plate();
