@@ -1,6 +1,6 @@
 all: gol
 
-CC := gcc
+CC := nvcc
 
 ifeq ($(CC),nvcc)
 	EXT := cu
