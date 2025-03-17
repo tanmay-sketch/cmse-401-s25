@@ -7,7 +7,7 @@ ifeq ($(CC),nvcc)
 	FLAGS := -std=c++11 -lm -lpng16
 else
 	EXT := c
-	FLAGS := -lm -lpng16
+	FLAGS := -O3 -lm -lpng16
 endif
 
 gameoflife.o: gameoflife.$(EXT)
