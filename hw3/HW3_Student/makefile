@@ -8,7 +8,7 @@ ifeq ($(CC),nvcc)
 	LDFLAGS := -lpng
 else
 	EXT := c
-	CFLAGS := -O3
+	CFLAGS := 
 	LDFLAGS := -lm -lpng
 endif
 
