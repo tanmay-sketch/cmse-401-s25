@@ -36,21 +36,23 @@ __global__ void iteration_kernel(char* d_plate, int n, int gpu_which) {
         // Next board is offset by (gpu_which ^ 1)*plate_size.
         char* next = d_plate + ((gpu_which ^ 1) * plate_size);
 
-        // Count live neighbors (same offsets as CPU code).
+        // Count live neighbors exactly like the CPU implementation
+        // The CPU version uses: index - n - 3, index - n - 2, index - n - 1, ...
         int num = curr[index - stride - 1] + curr[index - stride] + curr[index - stride + 1]
                 + curr[index - 1]         +                          curr[index + 1]
                 + curr[index + stride - 1] + curr[index + stride]    + curr[index + stride + 1];
 
         // Apply Game of Life rules.
-        if (curr[index])
+        if (curr[index]) {
             next[index] = (num == 2 || num == 3) ? 1 : 0;
-        else
-            next[index] = (num == 3);
+        } else {
+            next[index] = (num == 3) ? 1 : 0;
+        }
     }
 }
 
 // -------------------------------------------------------------------
-// For debugging: prints plate[0] if n < 60. (Optional)
+// For debugging: prints plate[final_board] if n < 60.
 void print_plate_cuda(int final_board) {
     if (n < 60) {
         for (int i = 1; i <= n; i++) {
@@ -62,37 +64,35 @@ void print_plate_cuda(int final_board) {
     } else {
         printf("Plate too large to print to screen\n");
     }
-    printf("\0");
 }
 
 // -------------------------------------------------------------------
-// This PNG function matches the CPU code's indexing, which uses:
-//   - (i-1)*n + j  for the 1D image index
-//   - pindex = i*(n+2) + j for reading from board
-//   - final board is plate[!which] in the CPU code
-// So we replicate that here by taking a final_board argument.
+// This PNG function matches the CPU code's indexing
 void plate2png_cuda(const char* filename, int final_board) {
     unsigned char* img = (unsigned char*) malloc(n * n * sizeof(unsigned char));
     if (img == NULL) {
         fprintf(stderr, "Error allocating memory for image\n");
         exit(EXIT_FAILURE);
     }
+    memset(img, 0, n * n * sizeof(unsigned char)); // Initialize to zeros
+    
     image_size_t sz;
     sz.width = n;
     sz.height = n; 
 
+    // Fill the image array - match exactly with CPU implementation
     for (int i = 1; i <= n; i++) {
         for (int j = 1; j <= n; j++) {
             int pindex = i * (n + 2) + j;
-            int index  = (i - 1) * n + j;  // Matching CPU implementation exactly
+            int index = (i - 1) * n + j - 1; // Shift j by 1 to get 0-based indexing
+            
             if (plate[final_board][pindex] > 0)
                 img[index] = 255;
             else
                 img[index] = 0;
-            printf("%d ", img[index]);  // Print the value to verify
         }
-        printf("\n");
     }
+    
     printf("Writing file\n");
     write_png_file((char*)filename, img, sz);
     printf("done writing png\n"); 
@@ -105,8 +105,8 @@ int main() {
     int M;
     char line[MAX_N];
 
-    // Use GPU 1 (or whichever device is best on your system).
-    CUDA_CALL(cudaSetDevice(1));
+    // Use GPU 0 (more commonly available)
+    CUDA_CALL(cudaSetDevice(0));
 
     // Read n, M from stdin
     if (scanf("%d %d", &n, &M) == 2) {
@@ -120,6 +120,10 @@ int main() {
                     plate[0][i * (n + 2) + j + 1] = line[j] - '0';
                 }
             }
+            
+            // Print initial board
+            printf("Initial board:\n");
+            print_plate_cuda(0);
         } else {
             // If n <= 0, set n = MAX_N and fill randomly
             n = MAX_N;
@@ -139,8 +143,7 @@ int main() {
         CUDA_CALL(cudaMalloc((void**)&d_plate, total_size));
         
         // Initialize both boards with zeros to avoid any leftover data
-        CUDA_CALL(cudaMemset(d_plate, 0, plate_size));
-        CUDA_CALL(cudaMemset(d_plate + plate_size, 0, plate_size));
+        CUDA_CALL(cudaMemset(d_plate, 0, total_size));
 
         // Copy the initial state (board0) to GPU offset 0
         CUDA_CALL(cudaMemcpy(d_plate, plate[0], plate_size, cudaMemcpyHostToDevice));
@@ -160,9 +163,7 @@ int main() {
             gpu_which ^= 1;  // flip boards
         }
 
-        // The CPU code writes its final PNG from plate[!which].
-        // So if gpu_which is 0, the final data is in board1. If gpu_which is 1, final data is in board0.
-        // final_board = gpu_which ^ 1 ensures we do the same as CPU code.
+        // The final board is the opposite of the current gpu_which
         int final_board = gpu_which ^ 1;
 
         // Copy that final board from the GPU to the host
@@ -172,7 +173,7 @@ int main() {
                              cudaMemcpyDeviceToHost));
 
         // Print the final board for debugging
-        printf("Final board state:\n");
+        printf("\n\nFinal:\n");
         print_plate_cuda(final_board);
 
         // Write PNG from board "final_board" using the CPU code's indexing
