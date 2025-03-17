@@ -4,7 +4,7 @@ CC := nvcc
 
 ifeq ($(CC),nvcc)
 	EXT := cu
-	FLAGS := -std=c++11 
+	FLAGS := -std=c++11 -lpng16
 else
 	EXT := c
 	FLAGS := -lm -lpng16

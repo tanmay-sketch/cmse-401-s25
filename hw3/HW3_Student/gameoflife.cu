@@ -6,7 +6,7 @@
 #include "png_util.h"
 #include <cuda.h>
 #define MAX_N 20000
-#define CUDA_CALL(x) {cudaError_t cuda_error__ = (x); if (cuda_error__) std::cout << "CUDA error: " << #x << "returned " << cudaGetErrorString(cuda_error__) << std::endl;}
+#define CUDA_CALL(x) {cudaError_t cuda_error__ = (x); if (cuda_error__) std::cout << "CUDA error: " << #x << " returned " << cudaGetErrorString(cuda_error__) << std::endl;}
 
 char plate[2][(MAX_N + 2) * (MAX_N + 2)];
 int which = 0;
@@ -14,7 +14,7 @@ int n;
 
 __global__ void iteration_kernel(char* d_plate, int n, int which) {
     int i = blockIdx.y * blockDim.y + threadIdx.y + 1;
-    int j = blockIdx.x * blockDim.x + threadIdx.y + 1;
+    int j = blockIdx.x * blockDim.x + threadIdx.x + 1; // Fixed to use threadIdx.x for columns
 
     if(i <= n && j <= n) {
         int stride = n + 2;
@@ -41,13 +41,12 @@ void print_plate(){
             printf("\n");
         }
     } else {
-	printf("Plate too large to print to screen\n");
+        printf("Plate too large to print to screen\n");
     }
-    printf("\0");
 }
 
 void plate2png(char* filename) {
-    unsigned char* img = (unsigned char*) malloc(n * n * sizeof(unsigned char));
+    unsigned char* img = (unsigned char*) malloc(n*n*sizeof(unsigned char));
 
     image_size_t sz;
     sz.width = n;
@@ -56,20 +55,19 @@ void plate2png(char* filename) {
     for(int i = 1; i <= n; i++){
         for(int j = 1; j <= n; j++){
             int pindex = i * (n + 2) + j;
-            int index = (i-1) * (n) + j;
-            if (plate[!which][pindex] > 0)
-		img[index] = 255; 
+            int index = (i-1) * n + (j-1);
+            if (plate[which][pindex] > 0)
+                img[index] = 255; 
             else 
-		img[index] = 0;
+                img[index] = 0;
         }
     }
     printf("Writing file\n");
-    write_png_file(filename,img,sz);
+    write_png_file(filename, img, sz);
    
     printf("done writing png\n"); 
     free(img);
     printf("done freeing memory\n");
-    
 }
 
 int main() {
@@ -80,7 +78,7 @@ int main() {
                 memset(plate[0], 0, sizeof(char) * (n + 2) * (n + 2));
                 memset(plate[1], 0, sizeof(char) * (n + 2) * (n + 2));
                 for(int i = 1; i <= n; i++){
-                    scanf("%s", &line);
+                    scanf("%s", line);
                     for(int j = 0; j < n; j++){
                         plate[0][i * (n + 2) + j + 1] = line[j] - '0';
                     }
@@ -93,7 +91,7 @@ int main() {
         }
 
         // ------- GPU initialization ------- 
-        int plate_size = (MAX_N + 2) * (MAX_N + 2) * sizeof(char);
+        int plate_size = (n + 2) * (n + 2) * sizeof(char);
         int total_size = 2 * plate_size;
         char* d_plate;
 
@@ -105,7 +103,7 @@ int main() {
         
         for(int i = 0; i < M; i++) {
             if(n < 60) {
-                CUDA_CALL(cudaMemcpy(plate[which],d_plate + which * plate_size, plate_size, cudaMemcpyDeviceToHost));
+                CUDA_CALL(cudaMemcpy(plate[which], d_plate + which * plate_size, plate_size, cudaMemcpyDeviceToHost));
                 printf("\nIteration %d:\n",i);
                 print_plate();
             }
@@ -115,7 +113,10 @@ int main() {
             which ^= 1; //switches the board using xor so that the next iteration will update the correct board
         }
         CUDA_CALL(cudaMemcpy(plate[which], d_plate + which * plate_size, plate_size, cudaMemcpyDeviceToHost));
-        plate2png("plate.png");
+        
+        char filename[] = "plate.png";  // Create a modifiable string
+        plate2png(filename);
+        
         print_plate();
         CUDA_CALL(cudaFree(d_plate));
     }
