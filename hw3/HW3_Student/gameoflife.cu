@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <iostream>
 #include "png_util.h"
 #include <cuda.h>
 #define MAX_N 20000
