@@ -60,7 +60,7 @@ void print_plate_cuda(int board) {
 
 // This PNG function matches the CPU code's indexing
 void plate2png_cuda(const char* filename, int final_board) {
-    char* img = (char*) malloc(n * n * sizeof(char));
+    unsigned char* img = (unsigned char*) malloc(n * n * sizeof(unsigned char));
     image_size_t sz;
     sz.width = n;
     sz.height = n; 
