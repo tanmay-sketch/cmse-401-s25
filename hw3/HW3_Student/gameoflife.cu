@@ -66,7 +66,7 @@ void print_plate_cuda() {
 }
 
 // -------------------------------------------------------------------
-// This PNG function matches the CPU code’s indexing, which uses:
+// This PNG function matches the CPU code's indexing, which uses:
 //   - (i-1)*n + j  for the 1D image index
 //   - pindex = i*(n+2) + j for reading from board
 //   - final board is plate[!which] in the CPU code
@@ -88,7 +88,7 @@ void plate2png_cuda(const char* filename, int final_board) {
     for (int i = 1; i <= n; i++) {
         for (int j = 1; j <= n; j++) {
             int pindex = i * (n + 2) + j;
-            int index  = (i - 1) * n + j;  // Off-by-one style used by the CPU code
+            int index  = (i - 1) * n + j;  // Matching CPU implementation exactly
             if (plate[final_board][pindex] > 0)
                 img[index] = 255;
             else
@@ -125,6 +125,8 @@ int main() {
         } else {
             // If n <= 0, set n = MAX_N and fill randomly
             n = MAX_N;
+            memset(plate[0], 0, sizeof(char) * (n + 2) * (n + 2));
+            memset(plate[1], 0, sizeof(char) * (n + 2) * (n + 2));
             for (int i = 1; i <= n; i++) {
                 for (int j = 0; j < n; j++) {
                     plate[0][i * (n + 2) + j + 1] = (char)(rand() % 2);
@@ -138,8 +140,9 @@ int main() {
         char* d_plate = NULL;
         CUDA_CALL(cudaMalloc((void**)&d_plate, total_size));
         
-        // Zero out the entire buffer to avoid any leftover data (gray squares).
-        CUDA_CALL(cudaMemset(d_plate, 0, total_size));
+        // Initialize both boards with zeros to avoid any leftover data
+        CUDA_CALL(cudaMemset(d_plate, 0, plate_size));
+        CUDA_CALL(cudaMemset(d_plate + plate_size, 0, plate_size));
 
         // Copy the initial state (board0) to GPU offset 0
         CUDA_CALL(cudaMemcpy(d_plate, plate[0], plate_size, cudaMemcpyHostToDevice));
@@ -172,11 +175,6 @@ int main() {
 
         // Write PNG from board "final_board" using the CPU code's indexing
         plate2png_cuda("plate_parallel.png", final_board);
-
-        // (Optional) Print a small board for debugging. This always prints plate[0].
-        // If you want to see the final board exactly, you might do:
-        //    if (final_board == 1) memcpy(plate[0], plate[1], plate_size);
-        //    print_plate_cuda();
 
         // Clean up
         CUDA_CALL(cudaFree(d_plate));
