@@ -1,13 +1,13 @@
 all: gol
 
-CC ?= gcc
+CC ?= nvcc
 
 ifeq ($(CC),nvcc)
 	EXT := cu
 	FLAGS := -std=c++11 -lm -lpng16
 else
 	EXT := c
-	FLAGS := -O3 -lm -lpng16
+	FLAGS := -lm -lpng16
 endif
 
 gameoflife.o: gameoflife.$(EXT)
