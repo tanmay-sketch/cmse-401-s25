@@ -19,7 +19,6 @@
 char plate[2][(MAX_N + 2) * (MAX_N + 2)];
 int n;
 
-// CUDA kernel: reads from GPU board "gpu_which" and writes to "gpu_which ^ 1".
 __global__ void iteration_kernel(char* d_plate, int n, int gpu_which) {
     int i = blockIdx.y * blockDim.y + threadIdx.y + 1;
     int j = blockIdx.x * blockDim.x + threadIdx.x + 1;
@@ -43,7 +42,6 @@ __global__ void iteration_kernel(char* d_plate, int n, int gpu_which) {
     }
 }
 
-// For debugging: prints plate[board] if n < 60.
 void print_plate_cuda(int board) {
     if (n < 60) {
         for (int i = 1; i <= n; i++) {
@@ -58,7 +56,6 @@ void print_plate_cuda(int board) {
     printf("\0");
 }
 
-// This PNG function matches the CPU code's indexing
 void plate2png_cuda(const char* filename, int final_board) {
     unsigned char* img = (unsigned char*) malloc(n * n * sizeof(unsigned char));
     image_size_t sz;
@@ -87,7 +84,7 @@ int main() {
     int M;
     char line[MAX_N];
 
-    // Try device 1 first, fall back to 0 if needed
+    // This was because someone was overusing the GPUS on the dev node
     if (cudaSetDevice(1) != cudaSuccess) {
         CUDA_CALL(cudaSetDevice(0));
     }
