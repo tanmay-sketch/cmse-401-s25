@@ -51,11 +51,11 @@ __global__ void iteration_kernel(char* d_plate, int n, int gpu_which) {
 
 // -------------------------------------------------------------------
 // For debugging: prints plate[0] if n < 60. (Optional)
-void print_plate_cuda() {
+void print_plate_cuda(int final_board) {
     if (n < 60) {
         for (int i = 1; i <= n; i++) {
             for (int j = 1; j <= n; j++) {
-                printf("%d", (int) plate[0][i * (n + 2) + j]);
+                printf("%d", (int) plate[final_board][i * (n + 2) + j]);
             }
             printf("\n");
         }
@@ -89,7 +89,9 @@ void plate2png_cuda(const char* filename, int final_board) {
                 img[index] = 255;
             else
                 img[index] = 0;
+            printf("%d ", img[index]);  // Print the value to verify
         }
+        printf("\n");
     }
     printf("Writing file\n");
     write_png_file((char*)filename, img, sz);
@@ -168,6 +170,10 @@ int main() {
                              d_plate + final_board * plate_size,
                              plate_size,
                              cudaMemcpyDeviceToHost));
+
+        // Print the final board for debugging
+        printf("Final board state:\n");
+        print_plate_cuda(final_board);
 
         // Write PNG from board "final_board" using the CPU code's indexing
         plate2png_cuda("plate_parallel.png", final_board);
