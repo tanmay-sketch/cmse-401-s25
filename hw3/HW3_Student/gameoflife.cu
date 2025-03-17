@@ -81,10 +81,6 @@ void plate2png_cuda(const char* filename, int final_board) {
     sz.width = n;
     sz.height = n; 
 
-    // The CPU code does:
-    //   int index = (i-1)*n + j;
-    //   int pindex = i*(n+2) + j;
-    // for i, j in [1..n].
     for (int i = 1; i <= n; i++) {
         for (int j = 1; j <= n; j++) {
             int pindex = i * (n + 2) + j;

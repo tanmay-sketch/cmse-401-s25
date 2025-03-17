@@ -4,20 +4,22 @@ CC := nvcc
 
 ifeq ($(CC),nvcc)
 	EXT := cu
-	FLAGS := -std=c++11 -lpng16
+	CFLAGS := -std=c++11
+	LDFLAGS := -lpng
 else
 	EXT := c
-	FLAGS := -O3 -lm -lpng16
+	CFLAGS := -O3
+	LDFLAGS := -lm -lpng
 endif
 
 gameoflife.o: gameoflife.$(EXT)
-	$(CC) $(FLAGS) -c gameoflife.$(EXT)
+	$(CC) $(CFLAGS) -c gameoflife.$(EXT)
 
 png_util.o: png_util.$(EXT)
-	$(CC) $(FLAGS) -c png_util.$(EXT)
+	$(CC) $(CFLAGS) -c png_util.$(EXT)
 
 gol: gameoflife.o png_util.o
-	$(CC) $(FLAGS) -o gol gameoflife.o png_util.o
+	$(CC) $(CFLAGS) -o gol gameoflife.o png_util.o $(LDFLAGS)
 
 test: gol data.txt
 	./gol < data.txt
