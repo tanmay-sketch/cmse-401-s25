@@ -6,6 +6,7 @@ Rembg is a tool to remove background from images. It uses deep learning models t
 
 HPCC Instructions:
 ```
+module purge
 module load Miniforge3
 module load cuDNN
 ```
@@ -18,6 +19,11 @@ conda create -n rembg_env python=3.11
 1. Conda environment
 ```
 conda activate rembg_env
+```
+
+2. Install requirements:
+```
+pip install -r requirements.txt
 ```
 
 2. Modify access rights to bash script:
@@ -35,6 +41,8 @@ If you want to test on an example image, from the root of the repository, you ca
 ```
 rembg i output.png subset/18030.jpg
 ```
+
+The output will be saved in the repository root as `output.png`. You can replace `subset/18030.jpg` with any image you want to test.
 
 Timings:
 - Time taken for 50 files with rembg: 267.58 seconds
