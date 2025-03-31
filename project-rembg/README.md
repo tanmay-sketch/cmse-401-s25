@@ -46,3 +46,7 @@ The output will be saved in the repository root as `output.png`. You can replace
 
 Timings:
 - Time taken for 50 files with rembg: 267.58 seconds
+
+## References
+1. https://github.com/danielgatis/rembg
+2. https://pytorch.org/get-started/locally/
