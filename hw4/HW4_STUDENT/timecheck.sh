@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-# Checks if the user passed in input
 if [[ $# -ne 1 ]]; then
   echo "Usage: $0 <input_file>"
   exit 1
@@ -27,9 +26,8 @@ for SEED in $(seq 1 $NUM_RUNS); do
   # Record start time (in seconds + nanoseconds)
   START_TIME=$(date +%s.%N)
   
-  # Run your program
   # We direct stdout/stderr to a temporary file so we can parse it
-  ./revROC "$INPUT_FILE" "$SEED" > "tmp_output_$SEED.txt" 2>&1
+  ./revGOL "$INPUT_FILE" "$SEED" > "tmp_output_$SEED.txt" 2>&1
   
   # Record end time
   END_TIME=$(date +%s.%N)
@@ -68,5 +66,3 @@ echo "Best Fitness found: $BEST_FITNESS (Seed=$BEST_SEED)"
 echo "Average Time over $NUM_RUNS runs: $AVG_TIME seconds"
 echo "Best output stored in: $BEST_OUTPUT"
 echo "==========================================="
-
-# End of script
