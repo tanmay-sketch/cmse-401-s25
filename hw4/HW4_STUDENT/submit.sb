@@ -1,0 +1,12 @@
+#!/bin/bash --login
+#SBATCH --job-name=timecheck        # Job name
+#SBATCH --time=4:00:00              # Run time (hh:mm:ss)
+#SBATCH --ntasks=1                  # Number of tasks (processes)
+#SBATCH --cpus-per-task=1           # Number of CPU cores per task
+#SBATCH --mem=8G                    # Memory (adjust as necessary)
+
+echo "Starting job at $(date)"
+echo "Running timecheck.sh with input file cmse2.txt ..."
+export SEED=1
+./timecheck.sh cmse2.txt
+echo "Job finished at $(date)"

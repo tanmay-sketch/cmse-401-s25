@@ -1,0 +1,11 @@
+#!/bin/bash --login
+#SBATCH --job-name=pp_benchmark
+#SBATCH --output=slurm-%A_%a.out
+#SBATCH --array=1-50
+#SBATCH --ntasks=1
+#SBATCH --time=00:32:00
+#SBATCH --mem=2G
+
+mkdir -p part2_outputs
+
+./revGOL cmse2.txt $SLURM_ARRAY_TASK_ID > part2_outputs/tmp_output_$SLURM_ARRAY_TASK_ID.txt
