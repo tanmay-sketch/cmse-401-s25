@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash --login
 #SBATCH --job-name=reverseGOL-mpi
 #SBATCH --ntasks=50
 #SBATCH --mem=100gb
