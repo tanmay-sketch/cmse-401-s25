@@ -1,4 +1,4 @@
-#!/bin/bash --login
+#!/bin/bash
 #SBATCH --job-name=reverseGOL-mpi
 #SBATCH --ntasks=50
 #SBATCH --mem=100gb
@@ -12,4 +12,5 @@ cd $SLURM_SUBMIT_DIR
 make clean
 make revGOL-mpi
 
-srun ./revGOL-mpi cmse2.txt > mpi_basic_best.txt
+# Run the MPI program and save output to mpi_best.txt
+srun ./revGOL-mpi cmse2.txt > mpi_best.txt 

@@ -196,8 +196,62 @@ int main(int argc, char *argv[]) {
                     sbest = i;
             }
         }
-	
+
         int rate = (int) ((double) pop_fitness[best]/(n*n) * 100);
+
+        if (rank == 0) {
+            // Lead worker receives from last worker first
+            int last_rank = size - 1;
+            int neighbor_fitness;
+            char *neighbor_plate = (char *) calloc((n+2)*(n+2), sizeof(char));
+            
+            // Receive from last worker
+            MPI_Recv(&neighbor_fitness, 1, MPI_INT, last_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(neighbor_plate, (n+2)*(n+2), MPI_CHAR, last_rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            
+            // If neighbor has better fitness, update our population
+            if (neighbor_fitness < pop_fitness[best]) {
+                // Save current best as second best
+                memcpy(population[sbest], population[best], (n+2)*(n+2)*sizeof(char));
+                // Update best with neighbor's solution
+                memcpy(population[best], neighbor_plate, (n+2)*(n+2)*sizeof(char));
+                pop_fitness[best] = neighbor_fitness;
+            }
+            
+            // Then send to next worker (rank 1)
+            MPI_Send(&pop_fitness[best], 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
+            MPI_Send(population[best], (n+2)*(n+2), MPI_CHAR, 1, 1, MPI_COMM_WORLD);
+            
+            free(neighbor_plate);
+        } else {
+            // All other workers: first send, then receive
+            int next_rank = (rank + 1) % size;
+            int prev_rank = (rank - 1 + size) % size;
+            char *neighbor_plate = (char *) calloc((n+2)*(n+2), sizeof(char));
+            
+            // First send our best to next rank
+            MPI_Send(&pop_fitness[best], 1, MPI_INT, next_rank, 0, MPI_COMM_WORLD);
+            MPI_Send(population[best], (n+2)*(n+2), MPI_CHAR, next_rank, 1, MPI_COMM_WORLD);
+            
+            // Then receive from previous rank
+            int neighbor_fitness;
+            MPI_Recv(&neighbor_fitness, 1, MPI_INT, prev_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(neighbor_plate, (n+2)*(n+2), MPI_CHAR, prev_rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            
+            // If neighbor has better fitness, update our population
+            if (neighbor_fitness < pop_fitness[best]) {
+                // Save current best as second best
+                memcpy(population[sbest], population[best], (n+2)*(n+2)*sizeof(char));
+                // Update best with neighbor's solution
+                memcpy(population[best], neighbor_plate, (n+2)*(n+2)*sizeof(char));
+                pop_fitness[best] = neighbor_fitness;
+            }
+            
+            free(neighbor_plate);
+        }
+
+        // barrier to synchronize all processes
+        MPI_Barrier(MPI_COMM_WORLD);
 
         for(int i=0; i <npop; i++) {
             if (i == sbest) {
