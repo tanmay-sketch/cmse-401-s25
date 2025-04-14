@@ -75,7 +75,7 @@ The intermittent state sharing approach allows workers to collaborate during the
 
 ## Conclusion
 
-This assignment demonstrated the power of parallel computing in solving complex optimization problems. By implementing increasingly sophisticated parallel approaches, we were able to explore the solution space more effectively and potentially find better solutions than would be possible with a serial approach.
+This assignment demonstrated the power of parallel computing in solving complex optimization problems. By implementing increasingly complex parallel approaches, we were able to explore the solution space more effectively and potentially find better solutions than would be possible with a serial approach.
 
 ### Compilation Instructions
 
