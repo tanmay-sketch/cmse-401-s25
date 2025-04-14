@@ -1,10 +1,10 @@
-#!/bin/bash --login
+#!/bin/bash
 #SBATCH --job-name=reverseGOL-mpi
 #SBATCH --ntasks=50
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=100gb
 #SBATCH --time=00:32:00
-#SBATCH --output=part3_outputs/reverseGOL_%j.log
+#SBATCH --output=slurm-%j.out
 
 module load OpenMPI
 
@@ -13,4 +13,4 @@ cd $SLURM_SUBMIT_DIR
 make clean
 make revGOL-mpi
 
-srun ./revGOL-mpi cmse2.txt
+srun ./revGOL-mpi cmse2.txt > mpi_basic_best.txt
