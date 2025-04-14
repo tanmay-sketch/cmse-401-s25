@@ -149,11 +149,6 @@ int main(int argc, char *argv[]) {
     else
         rand_seed = (unsigned int) time(&t) + rank;
     
-    // Only rank 0 prints initial info
-    if (rank == 0) {
-        printf("Random Seed for rank 0 = %d\n", rand_seed);
-        printf("Running with %d MPI processes\n", size);
-    }
     srand(rand_seed);
 
     char * test_plate;
@@ -190,12 +185,9 @@ int main(int argc, char *argv[]) {
                 sbest = best;
                 best = i;    
                 if (pop_fitness[best] == 0) {
-                    printf("Perfect previous plate found\n");
                     char * temp = target_plate;
                     target_plate = population[best];
                     population[best] = temp;
-                    printf("%d %d\n", n, M);
-                    print_plate(target_plate, n);
                     pop_fitness[best] = n*n;
                     M++;
                 }                 
@@ -203,10 +195,6 @@ int main(int argc, char *argv[]) {
                 if (sbest == best) 
                     sbest = i;
             }
-        }
-
-        if (rank == 0) {
-            printf("Done with Generation %d with best=%d fitness=%d\n", g, best, pop_fitness[best]);
         }
 	
         int rate = (int) ((double) pop_fitness[best]/(n*n) * 100);
@@ -251,11 +239,9 @@ int main(int argc, char *argv[]) {
             free(worker_plate);
         }
 
-        // Print final results
-        printf("\nFinal Results after MPI consolidation:\n");
+        // Print final result in the correct format (N M followed by plate)
         printf("%d %d\n", n, M+1);
         print_plate(global_best_plate, n);
-        printf("\nBest Fitness=%d over %d iterations\n", global_best_fitness, ngen);
 
         free(global_best_plate);
     } else {
