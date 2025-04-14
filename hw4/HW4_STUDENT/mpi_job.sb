@@ -4,6 +4,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=100gb
 #SBATCH --time=00:32:00
+#SBATCH --output=part3_outputs/reverseGOL_%j.log
 
 module load OpenMPI
 
